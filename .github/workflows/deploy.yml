@@ -1,0 +1,54 @@
+name: Java CI/CD to AWS EC2
+
+on:
+  push:
+    # Екшен спрацює автоматично при кожному пуші в майстер-гілку
+    branches: [ "master", "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Тестова збірка на боці GitHub.
+      # Якщо ти десь пропустив дужку в коді — білд впаде тут, і деплой на сервер не почнеться
+      - name: Test Docker Build
+        working-directory: ./retail-app
+        run: docker build -t retail-app:latest .
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH to AWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 1. Перевіряємо, чи є папка проєкту на сервері. Якщо немає — клонуємо її
+            if [ ! -d "retail-project" ]; then
+              git clone https://github.com/BenyaMihelson/retail-project.git retail-project
+              cd retail-project
+            else
+              cd retail-project
+              # Оновлюємо посилання на репозиторій (про всяк випадок)
+              git remote set-url origin https://github.com/BenyaMihelson/retail-project.git
+              git fetch --all
+              # Скидаємо сервер до стану точної копії GitHub (видаляємо локальні хвости)
+              git reset --hard origin/master || git reset --hard origin/main
+            fi
+            
+            # 2. Гасимо старі контейнери (зокрема й твій старий додаток, якщо він займав порти)
+            docker compose down
+            
+            # 3. Піднімаємо всю систему з нуля. 
+            # Оскільки в docker-compose.yml прописано build для retail-app, 
+            # Докер на самому сервері візьме твій Multi-stage Dockerfile і змонтує свіжий jar всередині.
+            docker compose up --build -d
