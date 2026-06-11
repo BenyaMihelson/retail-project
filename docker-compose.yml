@@ -18,7 +18,7 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/retail_db
       - SPRING_DATASOURCE_USERNAME=retail_admin
-      - SPRING_DATASOURCE_PASSWORD=retail_secure_password
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} # ТУТ ВИПРАВЛЕНО: тепер додаток бере той самий секретний пароль, що й база
       - SPRING_THREADS_VIRTUAL_ENABLED=true
     depends_on:
       - postgres
@@ -33,7 +33,7 @@ services:
     environment:
       - POSTGRES_DB=retail_db
       - POSTGRES_USER=retail_admin
-      - POSTGRES_PASSWORD=retail_secure_password
+      - POSTGRES_PASSWORD=${DB_PASSWORD} # Пароль бази даних, який керується ззовні
     volumes:
       - postgres_retail_data:/var/lib/postgresql/data
     networks:

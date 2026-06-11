@@ -45,10 +45,15 @@ jobs:
               git reset --hard origin/master || git reset --hard origin/main
             fi
             
-            # 2. Гасимо старі контейнери (зокрема й твій старий додаток, якщо він займав порти)
+            # 2. Створюємо тимчасовий файл .env і записуємо туди секретний пароль з GitHub Secrets
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+            
+            # 3. Гасимо старі контейнери, якщо вони були запущені
             docker compose down
             
-            # 3. Піднімаємо всю систему з нуля. 
-            # Оскільки в docker-compose.yml прописано build для retail-app, 
-            # Докер на самому сервері візьме твій Multi-stage Dockerfile і змонтує свіжий jar всередині.
+            # 4. Видаляємо старий порожній волюм (обов'язково, щоб Postgres перестворився з новим паролем)
+            docker volume rm retail-project_postgres_retail_data || true
+            
+            # 5. Піднімаємо всю систему з нуля. 
+            # Докер автоматично підтягне пароль із файлу .env і передасть його в docker-compose.yml
             docker compose up --build -d
