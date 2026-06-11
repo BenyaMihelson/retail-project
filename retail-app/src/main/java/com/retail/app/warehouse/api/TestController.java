@@ -1,4 +1,4 @@
-package com.retail.api;
+package com.retail.app.warehouse.api;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

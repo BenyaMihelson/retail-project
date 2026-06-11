@@ -1,4 +1,4 @@
-package com.retail;
+package com.retail.app;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
